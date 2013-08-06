@@ -148,9 +148,19 @@ public class StartingPointActivityTest extends
 			Cursor dbTranslationId = dbHandler.getWord(translation+i);
 			assertEquals(1, dbTranslationId.getCount());
 			Log.d(TAG, "translation is present only one time");
-			dbTranslationId.close();			
+			dbTranslationId.close();		
+			
+			Cursor dbWordTranslationRelationId = dbHandler.getWordTranslationRelation(word+i, translation+i);
+			assertEquals(1, dbWordTranslationRelationId.getCount());
+			Log.d(TAG, "relationship between word and translation is present only once");
+			dbWordTranslationRelationId.close();
+			
+			Cursor dbWordWordsetRelationId = dbHandler.getWordWordsetRelation(word+i, wordsetName);
+			assertEquals(1, dbWordWordsetRelationId.getCount());
+			Log.d(TAG, "relationship between word and wordset is present only once");
+			dbWordWordsetRelationId.close();
+			
 		}
-		// TODO: chceck if relatons are not repeating themselves
 		Cursor cursor = dbHandler.getlanguageFromWordset(wordsetName, "");
 		assertEquals(1, cursor.getCount());
 		cursor.close();
