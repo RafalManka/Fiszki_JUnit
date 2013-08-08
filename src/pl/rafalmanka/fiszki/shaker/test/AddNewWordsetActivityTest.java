@@ -15,6 +15,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Spinner;
 
 import com.jayway.android.robotium.solo.Solo;
 
@@ -30,9 +31,19 @@ public class AddNewWordsetActivityTest extends
 		super(AddNewWordsetActivity.class);
 	}
 
+	public AddNewWordsetActivityTest(String name) {
+		super(AddNewWordsetActivity.class);
+		setName(name);
+	}
+
 	protected void setUp() throws Exception {
 		super.setUp();
 		mSolo = new Solo(getInstrumentation(), getActivity());
+	}
+
+	@Override
+	public void tearDown() throws Exception {
+		mSolo.finishOpenedActivities();
 	}
 
 	/**
@@ -46,15 +57,19 @@ public class AddNewWordsetActivityTest extends
 	public void testIfNewWordsetIsInsertedProperly() {
 		int numberOfWordsToInsert = 2;// number of words to input
 
+		mSolo.waitForView(pl.rafalmanka.fiszki.shaker.R.id.imageButton_titlebar);
 		ImageButton imageButton = (ImageButton) mSolo.getCurrentActivity()
 				.findViewById(
 						pl.rafalmanka.fiszki.shaker.R.id.imageButton_titlebar);
+
 		mSolo.clickOnView(imageButton);
-		mSolo.assertCurrentActivity("youre in starting point activity",
-				StartingPointActivity.class);
+		mSolo.waitForView(pl.rafalmanka.fiszki.shaker.R.id.imageButton_add_wordset);
+
+		mSolo.waitForActivity(StartingPointActivity.class);
 
 		imageButton = (ImageButton) mSolo.getCurrentActivity().findViewById(
 				pl.rafalmanka.fiszki.shaker.R.id.imageButton_add_wordset);
+
 		mSolo.clickOnView(imageButton);
 		mSolo.assertCurrentActivity("youre add new wordset activity",
 				AddNewWordsetActivity.class);
@@ -85,6 +100,7 @@ public class AddNewWordsetActivityTest extends
 
 		for (int i = 0; i < numberOfWordsToInsert; i++) {
 			mSolo.enterText(editText_word, word + i);
+			Log.d(TAG, "word + i: " + word + i);
 			mSolo.enterText(editText_translaion, translation + i);
 			mSolo.clickOnView(button);
 		}
@@ -95,11 +111,14 @@ public class AddNewWordsetActivityTest extends
 						pl.rafalmanka.fiszki.shaker.R.id.button_add_new_dictionary_submit_set);
 
 		mSolo.clickOnView(button);
+		mSolo.waitForView(pl.rafalmanka.fiszki.shaker.R.id.imageButton_titlebar);
 
 		DatabaseHandler dbHandler = new DatabaseHandler(
 				mSolo.getCurrentActivity());
 		for (int i = 0; i < numberOfWordsToInsert; i++) {
+			Log.d(TAG, "2word + i: " + word + i);
 			Cursor dbWordId = dbHandler.getWord(word + i);
+
 			assertEquals(1, dbWordId.getCount());
 			dbWordId.close();
 			Log.d(TAG, "word is present only one time");
@@ -137,13 +156,8 @@ public class AddNewWordsetActivityTest extends
 
 		mSolo.assertCurrentActivity("you should be viewing flipcard",
 				MainActivity.class);
-		
-		
-		testDeleteWordset();
-		
-		
-	}
 
+	}
 
 	public void testDeleteWordset() {
 		ImageButton imageButton = (ImageButton) mSolo.getCurrentActivity()
@@ -170,13 +184,40 @@ public class AddNewWordsetActivityTest extends
 		LinearLayout lll = (LinearLayout) ll.getChildAt(1);
 		Button deleteButton = (Button) lll.getChildAt(1);
 		mSolo.clickOnView(deleteButton);
-		//mSolo.waitForText(pl.rafalmanka.fiszki.shaker.R.string.no);
-		mSolo.clickOnButton(mSolo
-				.getCurrentActivity()
-				.getApplicationContext()
+		// mSolo.waitForText(pl.rafalmanka.fiszki.shaker.R.string.no);
+		mSolo.clickOnButton(mSolo.getCurrentActivity().getApplicationContext()
 				.getResources()
 				.getString(pl.rafalmanka.fiszki.shaker.R.string.yes));
-		mSolo.assertCurrentActivity(MainActivity.class.getSimpleName(), MainActivity.class);
+		mSolo.assertCurrentActivity(MainActivity.class.getSimpleName(),
+				MainActivity.class);
 
+	}
+
+	public void testLanguageDropdownList() {
+
+		ImageButton imageButton = (ImageButton) mSolo.getCurrentActivity()
+				.findViewById(
+						pl.rafalmanka.fiszki.shaker.R.id.imageButton_titlebar);
+		mSolo.clickOnView(imageButton);
+		mSolo.assertCurrentActivity("youre in starting point activity",
+				StartingPointActivity.class);
+
+		imageButton = (ImageButton) mSolo.getCurrentActivity().findViewById(
+				pl.rafalmanka.fiszki.shaker.R.id.imageButton_add_wordset);
+		mSolo.clickOnView(imageButton);
+		mSolo.assertCurrentActivity("you should be in manage sets activity",
+				AddNewWordsetActivity.class);
+		Spinner spinner = (Spinner) mSolo.getCurrentActivity().findViewById(
+				pl.rafalmanka.fiszki.shaker.R.id.dropdown_language_chooser);
+		assertTrue(spinner.isShown());
+		
+		mSolo.pressSpinnerItem(0, 0);
+		assertEquals(10, spinner.getPaddingLeft());
+		
+		DatabaseHandler dbh = new DatabaseHandler(mSolo.getCurrentActivity().getApplicationContext());
+		Cursor cursor = dbh.getLanguageList();		
+		Log.d(TAG,"cursor.getCount(): "+cursor.getCount()+" spinner.getChildCount(): "+spinner.getChildCount());
+		assertEquals(cursor.getCount(), spinner.getCount());
+		cursor.close();
 	}
 }
